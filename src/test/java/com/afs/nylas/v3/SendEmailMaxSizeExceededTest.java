@@ -1,32 +1,60 @@
-package com.afs.nylas;
+package com.afs.nylas.v3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nylas.NylasClient;
-import com.nylas.models.*;
+import com.nylas.models.CreateDraftRequest;
+import com.nylas.models.EmailName;
+import com.nylas.models.NylasApiError;
 import com.nylas.util.FileUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MaxSizeExceededTest {
+class SendEmailMaxSizeExceededTest {
 
-    private static String nylas3_apiKey = "";
-    private static String nylas3_grantId_outlook_com = "";
-    private static String nylas3_grantId_google = "";
-    private static String test_email_to = "";
+    private static String nylas3_apiKey;
+    private static String nylas3_grantId_outlook_com;
+    private static String nylas3_grantId_google;
+    private static String test_email_to;
 
     // 25MB is the limit for Google and Microsoft
     private static final int max_provider_attachment_size = 26 * 1024 * 1024;  // 26MB
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final String fileName = "file_too_large.txt";
+
+    @BeforeAll
+    static void initAll() throws IOException {
+
+        // Set properties from resources/test.properties file
+        Properties properties = new Properties();
+        properties.load(new FileReader("src/test/resources/test.properties"));
+
+        nylas3_apiKey = properties.getProperty("nylas3.apiKey");
+        nylas3_grantId_outlook_com = properties.getProperty("nylas3.grantId.outlook.com");
+        nylas3_grantId_google = properties.getProperty("nylas3.grantId.google");
+        test_email_to = properties.getProperty("test.email.to");
+    }
+
+    @AfterEach
+    void cleanUp() throws IOException {
+        // Delete the file if it exists
+        Path file_too_large = Paths.get(fileName);
+        Files.delete(file_too_large);
+    }
 
     /**
      * Tests sending a message with an attachment that is too large for the provider
@@ -37,7 +65,7 @@ class MaxSizeExceededTest {
     public void maxSizeExceededTest_google() throws IOException {
 
         // Create a file that is too large for the provider
-        Path file_too_large = Paths.get("file_too_large.txt");
+        Path file_too_large = Paths.get(fileName);
         this.generateFile(file_too_large, max_provider_attachment_size);
 
         NylasClient nylasClient = new NylasClient.Builder(nylas3_apiKey).build();
@@ -59,9 +87,6 @@ class MaxSizeExceededTest {
         // And the error message should contain "too large"
         String strProviderErrors = objectMapper.writeValueAsString(nylasApiError.getProviderError());
         assertTrue(strProviderErrors.contains("too large"));
-
-        // Clean up
-        Files.delete(file_too_large);
     }
 
     /**
@@ -73,7 +98,7 @@ class MaxSizeExceededTest {
     public void maxSizeExceededTest_microsoft() throws IOException {
 
         // Create a file that is too large for the provider
-        Path file_too_large = Paths.get("file_too_large.txt");
+        Path file_too_large = Paths.get(fileName);
         this.generateFile(file_too_large, max_provider_attachment_size);
 
         NylasClient nylasClient = new NylasClient.Builder(nylas3_apiKey).build();

@@ -41,6 +41,13 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Nylas API v2 -->
+<!--    <dependency>-->
+<!--      <groupId>com.nylas.sdk</groupId>-->
+<!--      <artifactId>nylas-java-sdk</artifactId>-->
+<!--      <version>1.22.0</version>-->
+<!--    </dependency>-->
+
     <!-- Nylas API v3 -->
     <dependency>
       <groupId>com.nylas.sdk</groupId>
