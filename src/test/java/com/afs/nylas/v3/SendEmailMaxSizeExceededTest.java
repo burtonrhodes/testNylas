@@ -5,6 +5,7 @@ import com.nylas.NylasClient;
 import com.nylas.models.CreateDraftRequest;
 import com.nylas.models.EmailName;
 import com.nylas.models.NylasApiError;
+import com.nylas.models.SendMessageRequest;
 import com.nylas.util.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,9 +61,10 @@ class SendEmailMaxSizeExceededTest {
      * Tests sending a message with an attachment that is too large for the provider
      * <br/>
      * Provider: GOOGLE
+     * Method: Nylas Draft
      */
     @Test
-    public void maxSizeExceededTest_google() throws IOException {
+    public void maxSizeExceededTest_google_draft() throws IOException {
 
         // Create a file that is too large for the provider
         Path file_too_large = Paths.get(fileName);
@@ -81,21 +83,47 @@ class SendEmailMaxSizeExceededTest {
             nylasClient.drafts().create(nylas3_grantId_google, draftRequest);
         });
 
-        // Then the error should be of type "provider_error"
-        assertEquals("provider_error", nylasApiError.getType());
+        // Then the error should provide something that says the message is too large
+        assertTrue(nylasApiError.getMessage().contains("max size"));
+    }
 
-        // And the error message should contain "too large"
-        String strProviderErrors = objectMapper.writeValueAsString(nylasApiError.getProviderError());
-        assertTrue(strProviderErrors.contains("too large"));
+    /**
+     * Tests sending a message with an attachment that is too large for the provider
+     * <br/>
+     * Provider: GOOGLE
+     * Method: Nylas Messages
+     */
+    @Test
+    public void maxSizeExceededTest_google_messages() throws IOException {
+
+        // Create a file that is too large for the provider
+        Path file_too_large = Paths.get(fileName);
+        this.generateFile(file_too_large, max_provider_attachment_size);
+
+        NylasClient nylasClient = new NylasClient.Builder(nylas3_apiKey).build();
+        SendMessageRequest sendBuilder = new SendMessageRequest.Builder(Collections.singletonList(new EmailName(test_email_to, test_email_to)))
+                .subject("Test")
+                .body("This is a test email message that is too large.")
+                .attachments(Collections.singletonList(FileUtils.attachFileRequestBuilder(file_too_large.toString())))
+                .build();;
+
+        // When creating a message with an attachment that is too large
+        NylasApiError nylasApiError = assertThrows(NylasApiError.class, () -> {
+            nylasClient.messages().send(nylas3_grantId_google, sendBuilder);
+        });
+
+        // Then the error should provide something that says the message is too large
+        assertTrue(nylasApiError.getMessage().contains("max size"));
     }
 
     /**
      * Tests sending a message with an attachment that is too large for the provider
      * <br/>
      * Provider: MICROSOFT
+     * Method: Nylas Draft
      */
     @Test
-    public void maxSizeExceededTest_microsoft() throws IOException {
+    public void maxSizeExceededTest_microsoft_draft() throws IOException {
 
         // Create a file that is too large for the provider
         Path file_too_large = Paths.get(fileName);
@@ -114,15 +142,38 @@ class SendEmailMaxSizeExceededTest {
             nylasClient.drafts().create(nylas3_grantId_outlook_com, draftRequest);
         });
 
-        // Then the error should be of type "provider_error"
-        assertEquals("provider_error", nylasApiError.getType());
+        // Then the error should provide something that says the message is too large
+        assertTrue(nylasApiError.getMessage().contains("max size"));
+    }
 
-        // And the error message should contain "too large" (or something similar)
-        String strProviderErrors = objectMapper.writeValueAsString(nylasApiError.getProviderError());
-        assertTrue(strProviderErrors.contains("too large"));
+    /**
+     * Tests sending a message with an attachment that is too large for the provider
+     * <br/>
+     * Provider: MICROSOFT
+     * Method: Nylas Messages
+     */
+    @Test
+    public void maxSizeExceededTest_microsoft_messages() throws IOException {
 
-        // Clean up
-        Files.delete(file_too_large);
+        // Create a file that is too large for the provider
+        Path file_too_large = Paths.get(fileName);
+        this.generateFile(file_too_large, max_provider_attachment_size);
+
+        NylasClient nylasClient = new NylasClient.Builder(nylas3_apiKey).build();
+        SendMessageRequest sendBuilder = new SendMessageRequest.Builder(Collections.singletonList(new EmailName(test_email_to, test_email_to)))
+                .subject("Test")
+                .body("This is a test email message that is too large.")
+                .attachments(Collections.singletonList(FileUtils.attachFileRequestBuilder(file_too_large.toString())))
+                .build();
+        ;
+
+        // When creating a message with an attachment that is too large
+        NylasApiError nylasApiError = assertThrows(NylasApiError.class, () -> {
+            nylasClient.messages().send(nylas3_grantId_outlook_com, sendBuilder);
+        });
+
+        // Then the error should provide something that says the message is too large
+        assertTrue(nylasApiError.getMessage().contains("max size"));
     }
 
     /**
