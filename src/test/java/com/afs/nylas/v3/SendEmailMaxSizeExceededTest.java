@@ -2,10 +2,7 @@ package com.afs.nylas.v3;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nylas.NylasClient;
-import com.nylas.models.CreateDraftRequest;
-import com.nylas.models.EmailName;
-import com.nylas.models.NylasApiError;
-import com.nylas.models.SendMessageRequest;
+import com.nylas.models.*;
 import com.nylas.util.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -108,12 +105,12 @@ class SendEmailMaxSizeExceededTest {
                 .build();;
 
         // When creating a message with an attachment that is too large
-        NylasApiError nylasApiError = assertThrows(NylasApiError.class, () -> {
+        NylasSdkRemoteClosedError nylasSdkRemoteClosedError = assertThrows(NylasSdkRemoteClosedError.class, () -> {
             nylasClient.messages().send(nylas3_grantId_google, sendBuilder);
         });
 
         // Then the error should provide something that says the message is too large
-        assertTrue(nylasApiError.getMessage().contains("max size"));
+        assertTrue(nylasSdkRemoteClosedError.getMessage().contains("Nylas API closed the connection"));
     }
 
     /**
@@ -168,12 +165,12 @@ class SendEmailMaxSizeExceededTest {
         ;
 
         // When creating a message with an attachment that is too large
-        NylasApiError nylasApiError = assertThrows(NylasApiError.class, () -> {
+        NylasSdkRemoteClosedError nylasSdkRemoteClosedError = assertThrows(NylasSdkRemoteClosedError.class, () -> {
             nylasClient.messages().send(nylas3_grantId_outlook_com, sendBuilder);
         });
 
         // Then the error should provide something that says the message is too large
-        assertTrue(nylasApiError.getMessage().contains("max size"));
+        assertTrue(nylasSdkRemoteClosedError.getMessage().contains("Nylas API closed the connection"));
     }
 
     /**
